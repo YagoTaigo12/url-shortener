@@ -1,0 +1,35 @@
+# Conteúdo para .gitignore
+
+# Variáveis de Ambiente e Arquivos de Configuração Secreta
+.env
+# Se você tiver um arquivo .env dentro de backend/ também
+backend/.env
+
+# Python (dependências, caches, etc.)
+__pycache__
+*.pyc
+*.o
+*.so
+.Python
+.venv
+venv
+.env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+dist/
+build/
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.vscode/ # Configurações de IDE
+
+# Docker / Volumes
+# Ignore os volumes de dados do MySQL
+db_data/ 
+# Se a pasta 'db' tiver arquivos gerados, pode ser necessário ignorar subpastas aqui
+# Mas mantenha db/init.sql.
+
+# Logs
+*.log
