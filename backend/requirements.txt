@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy
+pymysql
+python-dotenv
+alembic
+redis
+ldap3
+pydantic-settings
+cryptography
