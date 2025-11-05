@@ -1,25 +1,28 @@
-"""
-Define as rotas principais da API relacionadas ao encurtamento de URLs.
-"""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.schemas.url_schema import URLCreate, URLResponse
-from app.services.url_service import create_short_url, get_original_url
+from app.services.url_service import create_short_url, get_original_url, list_urls, delete_url
+from fastapi.responses import RedirectResponse
 
-router = APIRouter(prefix="/urls", tags=["URLs"])
+router = APIRouter(tags=["URLs"])
 
-@router.post("/", response_model=URLResponse)
+@router.post("/urls/", response_model=URLResponse, status_code=status.HTTP_201_CREATED)
 def shorten_url(url_data: URLCreate, db: Session = Depends(get_db)):
-    """Endpoint para encurtar uma nova URL."""
-    new_url = create_short_url(db, url_data)
-    return new_url
+    return create_short_url(db, url_data)
 
-@router.get("/{short_code}")
+@router.get("/urls/", response_model=list[URLResponse])
+def get_all_urls(db: Session = Depends(get_db)):
+    return list_urls(db)
+
+@router.delete("/urls/{short_code}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_url(short_code: str, db: Session = Depends(get_db)):
+    if not delete_url(db, short_code):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="URL não encontrada")
+
+@router.get("/{short_code}", summary="Redireciona para a URL original")
 def redirect_url(short_code: str, db: Session = Depends(get_db)):
-    """Endpoint para redirecionar uma URL encurtada."""
     url = get_original_url(db, short_code)
     if not url:
-        raise HTTPException(status_code=404, detail="URL not found")
-    # Em uma implementação real, faríamos um RedirectResponse aqui
-    return {"original_url": url.original_url}
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="URL não encontrada")
+    return RedirectResponse(url=url.original_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
