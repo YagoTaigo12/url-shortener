@@ -6,7 +6,7 @@
 backend/.env
 
 # Python (dependências, caches, etc.)
-__pycache__
+__pycache__/
 *.pyc
 *.o
 *.so
@@ -33,3 +33,5 @@ db_data/
 
 # Logs
 *.log
+
+#Scripts
