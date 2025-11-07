@@ -35,3 +35,4 @@ db_data/
 *.log
 
 #Scripts
+generate_sprint2_code.sh
