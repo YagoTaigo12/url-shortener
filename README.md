@@ -1,8 +1,16 @@
-#  Encurtador de URLs – Sprint 3
+#  Encurtador de URLs – Sprint 4
 
-Implementação da **segurança de acesso** via **JSON Web Tokens (JWT)**. As funcionalidades de **criação e gestão de URLs curtas** foram protegidas, exigindo registro e login (autenticação via banco de dados).
+Implementação do **sistema de cache com Redis** para otimizar a velocidade de redirecionamento, **complementando a segurança** de acesso via JWT. As funcionalidades de **criação e gestão de URLs curtas** agora exigem autenticação e contam com um sistema de failover para garantir a disponibilidade.
 
 ---
+# Novidades da Sprint 4 (Cache Redis)
+
+* **Otimização de Redirecionamento:** A rota GET /{short_code} agora consulta o cache Redis primeiro, antes de buscar no MySQL. Isso reduz drasticamente a latência e a carga do banco para leituras frequentes.
+
+* **Failover Automático:** Se o serviço Redis estiver indisponível, a aplicação automaticamente recorre ao MySQL para garantir que o redirecionamento continue funcionando (padrão fail-soft).
+
+* **Invalidação Assíncrona:** A atualização e a exclusão de URLs são realizadas em Background Tasks (FastAPI) para não bloquear a resposta HTTP enquanto o cache é atualizado.
+
 
 ## 📅 Cronograma do Projeto
 
@@ -20,7 +28,7 @@ Implementação da **segurança de acesso** via **JSON Web Tokens (JWT)**. As fu
 
 * Python 3.10+
 * FastAPI
-* **Passlib / Python-JOSE (JWT/Hashing)**
+* Passlib / Python-JOSE (JWT/Hashing)
 * SQLAlchemy 2.0
 * MySQL 8
 * Alembic (migrações)
@@ -81,14 +89,13 @@ docker-compose up --build
 ```
 
 * Banco **MySQL** inicializa com base `url_shortener`
+* **Redis** disponível para cachin
 * API **FastAPI** disponível em `http://localhost:8000`
 * Documentação interativa em `http://localhost:8000/docs`
-* Sistema pronto para CRUD e redirecionamento de URLs
+* Sistema pronto para autenticação, CRUD e redirecionamento OTIMIZADO por cache
 
 ---
 
-## Próximas Etapas (Sprint 4)
+## Próximas Etapas (Sprint 5)
 
-* Implementação do Redis
-* integração de cache para otimizar o redirecionamento de URLs
-* reduzir consultas ao banco de dados.
+* Configuração do Nginx e HTTPS.
