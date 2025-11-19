@@ -34,6 +34,12 @@ db_data/
 # Logs
 *.log
 
+# Script para gerar senha Hash
+backend/generate_hash.py
+
+# Certificados 
+nginx/certs/
+
 # Scripts gerados (Instaladores)
 /project_installer*.sh
 /generate*.sh

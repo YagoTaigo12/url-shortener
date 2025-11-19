@@ -45,8 +45,11 @@ services:
       - DATABASE_URL=mysql+pymysql://app_user:app_password@db:3306/url_shortener
     volumes:
       - ./backend:/app
-    ports:
-      - "8000:8000"
+    # EXPOSE 8000: Permite que outros containers na rede (como o Nginx) acessem a porta 8000
+    expose:
+      - "8000" 
+    # ports:
+    #   - "8000:8000"
     # command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   nginx:
@@ -56,10 +59,14 @@ services:
     depends_on:
       - backend
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:80"   # HTTP (será redirecionado para HTTPS)
+      - "443:443" # HTTPS
+    # volumes:
+    #   - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     volumes:
+      # Monta a nova configuração do Nginx com SSL
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-
+      # Monta o diretório de certificados gerados pelo script do host
+      - ./nginx/certs:/etc/nginx/certs:ro
 volumes:
   db_data:
