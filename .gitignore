@@ -34,5 +34,6 @@ db_data/
 # Logs
 *.log
 
-#Scripts
-generate_sprint2_code.sh
+# Scripts gerados (Instaladores)
+/project_installer*.sh
+/generate*.sh
