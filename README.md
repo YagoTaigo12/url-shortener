@@ -1,4 +1,4 @@
-#  Encurtador de URLs – Sprint 2
+#  Encurtador de URLs – Sprint 3
 
 Implementação da **segurança de acesso** via **JSON Web Tokens (JWT)**. As funcionalidades de **criação e gestão de URLs curtas** foram protegidas, exigindo registro e login (autenticação via banco de dados).
 
@@ -69,16 +69,6 @@ O Docker realiza:
 | `GET /urls/`                | Lista as URLs cadastradas        |           |
 | `DELETE /urls/{short_code}` | Remove uma URL pelo código curto |           |
 | `GET /{short_code}`         | Redireciona para a URL original  |           |
-
----
-
-## Funcionalidades da Sprint 2
-
-*  CRUD completo de URLs
-*  Geração de códigos curtos aleatórios e únicos
-*  Redirecionamento automático para a URL original
-*  Logger centralizado
-*  Healthcheck e inicialização controlada via Docker Compose
 
 ---
 
