@@ -22,6 +22,14 @@ services:
       retries: 10
       start_period: 20s # Opcional: tempo para o MySQL inicializar antes de começar a testar
 
+  redis:
+      image: redis:latest # Novo serviço Redis
+      container_name: redis_cache
+      restart: always
+      # Não expomos portas para o host, apenas para o backend
+      # ports:
+      #   - "6379:6379"
+
   backend:
     build: ./backend
     container_name: fastapi_backend
@@ -29,6 +37,8 @@ services:
     depends_on:
       db: # Espera o serviço 'db' estar SAUDÁVEL
         condition: service_healthy
+      redis: # Adiciona dependência ao Redis
+        condition: service_started
     env_file:
       - .env
     environment:

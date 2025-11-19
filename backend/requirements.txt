@@ -14,3 +14,5 @@ passlib==1.7.4
 python-jose==3.3.0
 # Dependência necessária para processar form data (OAuth2PasswordRequestForm)
 python-multipart==0.0.6
+#Dependência para o Redis
+redis==5.0.1

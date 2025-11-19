@@ -4,36 +4,57 @@
 # from app.schemas.url_schema import URLCreate, URLResponse
 # from app.services.url_service import create_short_url, get_original_url, list_urls, delete_url
 # from fastapi.responses import RedirectResponse
+# from app.core.security import get_current_username # Importa a dependência de segurança atualizada
 
 # router = APIRouter(tags=["URLs"])
 
+# # Rotas que exigem autenticação
 # @router.post("/urls/", response_model=URLResponse, status_code=status.HTTP_201_CREATED)
-# def shorten_url(url_data: URLCreate, db: Session = Depends(get_db)):
+# def shorten_url(
+#     url_data: URLCreate, 
+#     db: Session = Depends(get_db), 
+#     username: str = Depends(get_current_username) # Protegida com JWT
+# ):
+#     """Cria uma URL curta. Requer autenticação."""
 #     return create_short_url(db, url_data)
 
 # @router.get("/urls/", response_model=list[URLResponse])
-# def get_all_urls(db: Session = Depends(get_db)):
+# def get_all_urls(
+#     db: Session = Depends(get_db),
+#     username: str = Depends(get_current_username) # Protegida com JWT
+# ):
+#     """Lista todas as URLs curtas. Requer autenticação."""
 #     return list_urls(db)
 
 # @router.delete("/urls/{short_code}", status_code=status.HTTP_204_NO_CONTENT)
-# def remove_url(short_code: str, db: Session = Depends(get_db)):
+# def remove_url(
+#     short_code: str, 
+#     db: Session = Depends(get_db),
+#     username: str = Depends(get_current_username) # Protegida com JWT
+# ):
+#     """Deleta uma URL pelo código curto. Requer autenticação."""
 #     if not delete_url(db, short_code):
 #         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="URL não encontrada")
 
+# # Rota de redirecionamento (PÚBLICA)
 # @router.get("/{short_code}", summary="Redireciona para a URL original")
 # def redirect_url(short_code: str, db: Session = Depends(get_db)):
+#     """Redireciona o usuário para a URL original. Rota pública."""
 #     url = get_original_url(db, short_code)
 #     if not url:
 #         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="URL não encontrada")
+#     # Retorna o status 307 (Temporary Redirect) para manter o método HTTP original, se for o caso
 #     return RedirectResponse(url=url.original_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.schemas.url_schema import URLCreate, URLResponse
 from app.services.url_service import create_short_url, get_original_url, list_urls, delete_url
 from fastapi.responses import RedirectResponse
 from app.core.security import get_current_username # Importa a dependência de segurança atualizada
+# Importa as funções de cache para uso nas BackgroundTasks
+from app.core.redis_client import cache_url, invalidate_url_cache 
 
 router = APIRouter(tags=["URLs"])
 
@@ -41,16 +62,22 @@ router = APIRouter(tags=["URLs"])
 @router.post("/urls/", response_model=URLResponse, status_code=status.HTTP_201_CREATED)
 def shorten_url(
     url_data: URLCreate, 
+    background_tasks: BackgroundTasks, # Adiciona BackgroundTasks
     db: Session = Depends(get_db), 
-    username: str = Depends(get_current_username) # Protegida com JWT
+    username: str = Depends(get_current_username)
 ):
-    """Cria uma URL curta. Requer autenticação."""
-    return create_short_url(db, url_data)
+    """Cria uma URL curta. Requer autenticação. O cache é atualizado em background."""
+    new_url = create_short_url(db, url_data)
+    
+    # Adiciona a tarefa de cache em background (operação non-blocking para a resposta HTTP)
+    background_tasks.add_task(cache_url, new_url.short_code, new_url.original_url)
+    
+    return new_url
 
 @router.get("/urls/", response_model=list[URLResponse])
 def get_all_urls(
     db: Session = Depends(get_db),
-    username: str = Depends(get_current_username) # Protegida com JWT
+    username: str = Depends(get_current_username)
 ):
     """Lista todas as URLs curtas. Requer autenticação."""
     return list_urls(db)
@@ -58,19 +85,27 @@ def get_all_urls(
 @router.delete("/urls/{short_code}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_url(
     short_code: str, 
+    background_tasks: BackgroundTasks, # Adiciona BackgroundTasks
     db: Session = Depends(get_db),
-    username: str = Depends(get_current_username) # Protegida com JWT
+    username: str = Depends(get_current_username)
 ):
-    """Deleta uma URL pelo código curto. Requer autenticação."""
+    """Deleta uma URL pelo código curto. Requer autenticação. O cache é invalidado em background."""
     if not delete_url(db, short_code):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="URL não encontrada")
+
+    # Adiciona a tarefa de invalidação de cache em background
+    background_tasks.add_task(invalidate_url_cache, short_code)
+
 
 # Rota de redirecionamento (PÚBLICA)
 @router.get("/{short_code}", summary="Redireciona para a URL original")
 def redirect_url(short_code: str, db: Session = Depends(get_db)):
-    """Redireciona o usuário para a URL original. Rota pública."""
+    """
+    Redireciona o usuário para a URL original. 
+    A lógica de serviço agora prioriza o cache Redis. Rota pública.
+    """
     url = get_original_url(db, short_code)
     if not url:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="URL não encontrada")
-    # Retorna o status 307 (Temporary Redirect) para manter o método HTTP original, se for o caso
+        
     return RedirectResponse(url=url.original_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
