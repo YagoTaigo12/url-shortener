@@ -1,14 +1,14 @@
 #  Encurtador de URLs – Sprint 2
 
-Implementação do **backend base**, com **CRUD completo de URLs**, **geração de códigos curtos únicos** e **funcionalidade de redirecionamento automático** via FastAPI.
+Implementação da **segurança de acesso** via **JSON Web Tokens (JWT)**. As funcionalidades de **criação e gestão de URLs curtas** foram protegidas, exigindo registro e login (autenticação via banco de dados).
 
 ---
 
-##  Cronograma do Projeto
+## 📅 Cronograma do Projeto
 
 **Semana 1:** Setup e configuração inicial do ambiente (estrutura, containers, integração FastAPI + MySQL + Docker Compose).
 **Semana 2:** Implementação do backend base – CRUD de URLs, geração de códigos curtos e redirecionamento.
-**Semana 3:** Integração LDAP e autenticação JWT.
+**Semana 3:** **Implementação completa da autenticação JWT** e persistência de usuários no banco de dados. (LDAP adiado para v2.0)
 **Semana 4:** Implementação de cache Redis.
 **Semana 5:** Configuração do Nginx e HTTPS.
 **Semana 6:** Desenvolvimento do frontend.
@@ -16,10 +16,11 @@ Implementação do **backend base**, com **CRUD completo de URLs**, **geração 
 
 ---
 
-## Tecnologias Utilizadas
+## 🛠️ Tecnologias Utilizadas
 
 * Python 3.10+
 * FastAPI
+* **Passlib / Python-JOSE (JWT/Hashing)**
 * SQLAlchemy 2.0
 * MySQL 8
 * Alembic (migrações)
@@ -96,8 +97,8 @@ docker-compose up --build
 
 ---
 
-## Próximas Etapas (Sprint 3)
+## Próximas Etapas (Sprint 4)
 
-* Integração LDAP
-* Implementação de autenticação JWT
-* Proteção dos endpoints com tokens seguros
+* Implementação do Redis
+* integração de cache para otimizar o redirecionamento de URLs
+* reduzir consultas ao banco de dados.
