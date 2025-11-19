@@ -9,3 +9,8 @@ pydantic-settings==2.0.3
 cryptography==42.0.5
 httpx==0.24.1
 pytest==7.4.0
+# Dependências de Autenticação JWT
+passlib==1.7.4
+python-jose==3.3.0
+# Dependência necessária para processar form data (OAuth2PasswordRequestForm)
+python-multipart==0.0.6
