@@ -68,5 +68,7 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       # Monta o diretório de certificados gerados pelo script do host
       - ./nginx/certs:/etc/nginx/certs:ro
+    extra_hosts:
+      - "shrt.cc:10.138.11.229"
 volumes:
   db_data:

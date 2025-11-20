@@ -39,6 +39,7 @@ backend/generate_hash.py
 
 # Certificados 
 nginx/certs/
+nginx/certs-old/
 
 # Scripts gerados (Instaladores)
 /project_installer*.sh
