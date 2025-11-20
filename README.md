@@ -1,22 +1,22 @@
-#  Encurtador de URLs – Sprint 4
+#  Encurtador de URLs – Sprint 5
 
-Implementação do **sistema de cache com Redis** para otimizar a velocidade de redirecionamento, **complementando a segurança** de acesso via JWT. As funcionalidades de **criação e gestão de URLs curtas** agora exigem autenticação e contam com um sistema de failover para garantir a disponibilidade.
+Implementação do **Proxy Reverso Nginx e HTTPS/SSL**, garantindo que toda a comunicação com a API e futuros frontends seja criptografada. A aplicação agora adere aos protocolos de segurança padrão de produção, utilizando certificados auto-assinados para o ambiente de desenvolvimento.
 
 ---
-# Novidades da Sprint 4 (Cache Redis)
+# Novidades da Sprint 5 (Nginx e HTTPS)
 
-* **Otimização de Redirecionamento:** A rota GET /{short_code} agora consulta o cache Redis primeiro, antes de buscar no MySQL. Isso reduz drasticamente a latência e a carga do banco para leituras frequentes.
-
-* **Failover Automático:** Se o serviço Redis estiver indisponível, a aplicação automaticamente recorre ao MySQL para garantir que o redirecionamento continue funcionando (padrão fail-soft).
-
-* **Invalidação Assíncrona:** A atualização e a exclusão de URLs são realizadas em Background Tasks (FastAPI) para não bloquear a resposta HTTP enquanto o cache é atualizado.
+* **Camada de Segurança (HTTPS):** Toda a aplicação agora é servida via HTTPS (porta 443), utilizando certificados SSL auto-assinados para o ambiente local.
+* **Proxy Reverso:** O Nginx atua como ponto de entrada único, roteando o tráfego externo para o container FastAPI (backend).
+* **Redirecionamento Automático:** Todo o tráfego HTTP (porta 80) é automaticamente redirecionado para HTTPS (porta 443), forçando o acesso seguro.
+* **Arquitetura de Produção:** O acesso direto ao FastAPI na porta 8000 foi desabilitado externamente, sendo acessível apenas pelo Nginx (melhor prática de segurança e infraestrutura).
+* **Script de Setup de Certificados:** Adição de um script auxiliar (nginx/setup_certs.sh) para simplificar a geração dos certificados SSL auto-assinados necessários para o Nginx
 
 
 ## 📅 Cronograma do Projeto
 
 **Semana 1:** Setup e configuração inicial do ambiente (estrutura, containers, integração FastAPI + MySQL + Docker Compose).
 **Semana 2:** Implementação do backend base – CRUD de URLs, geração de códigos curtos e redirecionamento.
-**Semana 3:** **Implementação completa da autenticação JWT** e persistência de usuários no banco de dados. (LDAP adiado para v2.0)
+**Semana 3:** Implementação completa da autenticação JWT e persistência de usuários no banco de dados. (LDAP adiado para v2.0)
 **Semana 4:** Implementação de cache Redis.
 **Semana 5:** Configuração do Nginx e HTTPS.
 **Semana 6:** Desenvolvimento do frontend.
@@ -28,9 +28,12 @@ Implementação do **sistema de cache com Redis** para otimizar a velocidade de 
 
 * Python 3.10+
 * FastAPI
+* **Nginx**
+* **HTTPS/SSL (Certificados auto-assinados)**
 * Passlib / Python-JOSE (JWT/Hashing)
 * SQLAlchemy 2.0
 * MySQL 8
+* Redis (Cache)
 * Alembic (migrações)
 * Docker + Docker Compose
 * Uvicorn (ASGI)
@@ -47,6 +50,24 @@ git clone https://github.com/seu-usuario/url-shortener.git
 cd url-shortener
 ```
 
+### Preparação dos Certificados SSL
+
+* Antes de subir a aplicação, é **obrigatório** gerar os certificados SSL auto-assinados para o Nginx.
+
+# Navega para a pasta do Nginx
+cd nginx 
+
+# Torna o script executável
+chmod +x setup_certs.sh
+
+# Executa o script para gerar localhost.key e localhost.crt em nginx/certs
+./setup_certs.sh
+
+# Volta para a raiz do projeto
+cd ..
+
+**Importante:** Após gerar os certificados, você deve instalar o arquivo nginx/certs/localhost.crt no seu sistema operacional como uma Autoridade de Certificação Raiz Confiável para evitar avisos de segurança no navegador durante o desenvolvimento.
+
 ###  Subir o ambiente com Docker Compose
 
 ```bash
@@ -59,6 +80,7 @@ O Docker realiza:
 * Inicialização do MySQL
 * Espera automática via healthcheck
 * Execução do backend FastAPI no contêiner principal
+* **Inicialização do Nginx, que passa a ser o ponto de entrada**
 
 ---
 
@@ -87,15 +109,13 @@ Após rodar:
 ```bash
 docker-compose up --build
 ```
-
-* Banco **MySQL** inicializa com base `url_shortener`
-* **Redis** disponível para cachin
-* API **FastAPI** disponível em `http://localhost:8000`
-* Documentação interativa em `http://localhost:8000/docs`
-* Sistema pronto para autenticação, CRUD e redirecionamento OTIMIZADO por cache
+* Os serviços MySQL e Redis estarão rodando.
+* A API FastAPI estará rodando internamente na porta 8000.
+* O Nginx estará roteando o tráfego.
+* A API e documentação interativa estarão acessíveis via https://localhost/
 
 ---
 
-## Próximas Etapas (Sprint 5)
+## Próximas Etapas (Sprint 6)
 
-* Configuração do Nginx e HTTPS.
+* Desenvolvimento do frontend – construção de uma interface simples em HTML e Bootstrap integrada à API para encurtamento e gerenciamento de URLs.
