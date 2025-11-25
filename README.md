@@ -1,35 +1,48 @@
 #  Encurtador de URLs – Sprint 5
 
-Implementação do **Proxy Reverso Nginx e HTTPS/SSL**, garantindo que toda a comunicação com a API e futuros frontends seja criptografada. A aplicação agora adere aos protocolos de segurança padrão de produção, utilizando certificados auto-assinados para o ambiente de desenvolvimento.
+Implementação do **Proxy Reverso Nginx e HTTPS/SSL e suporte ao domínio customizado shrt.cc**, garantindo que toda a comunicação com a API e futuros frontends seja criptografada e usando um domínio único para acesso durante o desenvolvimento.
 
+A aplicação agora segue os padrões de arquitetura de produção: proxy reverso dedicado, SSL obrigatório, isolamento do backend e uso de certificados auto-assinados criados localmente.
 ---
-# Novidades da Sprint 5 (Nginx e HTTPS)
+
+# Novidades da Sprint 5 (Nginx, HTTPS e Domínio shrt.cc)
 
 * **Camada de Segurança (HTTPS):** Toda a aplicação agora é servida via HTTPS (porta 443), utilizando certificados SSL auto-assinados para o ambiente local.
 * **Proxy Reverso:** O Nginx atua como ponto de entrada único, roteando o tráfego externo para o container FastAPI (backend).
 * **Redirecionamento Automático:** Todo o tráfego HTTP (porta 80) é automaticamente redirecionado para HTTPS (porta 443), forçando o acesso seguro.
 * **Arquitetura de Produção:** O acesso direto ao FastAPI na porta 8000 foi desabilitado externamente, sendo acessível apenas pelo Nginx (melhor prática de segurança e infraestrutura).
 * **Script de Setup de Certificados:** Adição de um script auxiliar (nginx/setup_certs.sh) para simplificar a geração dos certificados SSL auto-assinados necessários para o Nginx
+* **Novo domínio local: shrt.cc:** A aplicação agora suporta o acesso pelo domínio customizado shrt.cc. Este domínio é resolvido internamente pelo Docker através do extra_hosts: 
+
+```yaml
+extra_hosts:
+  - "shrt.cc:10.138.11.229"
+```
+Esse mapeamento permite:
+
+* Acesso ao sistema via https://shrt.cc
+* Uso de um hostname real para testar HTTPS/SSL
+* Comportamento semelhante a um ambiente de produção
 
 
-## 📅 Cronograma do Projeto
+## Cronograma do Projeto
 
 **Semana 1:** Setup e configuração inicial do ambiente (estrutura, containers, integração FastAPI + MySQL + Docker Compose).
 **Semana 2:** Implementação do backend base – CRUD de URLs, geração de códigos curtos e redirecionamento.
 **Semana 3:** Implementação completa da autenticação JWT e persistência de usuários no banco de dados. (LDAP adiado para v2.0)
 **Semana 4:** Implementação de cache Redis.
-**Semana 5:** Configuração do Nginx e HTTPS.
+**Semana 5:** Configuração do Nginx, HTTPS e domínio.
 **Semana 6:** Desenvolvimento do frontend.
 **Semana 7:** Testes, documentação e ajustes finais do MVP.
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 * Python 3.10+
 * FastAPI
 * **Nginx**
-* **HTTPS/SSL (Certificados auto-assinados)**
+* **HTTPS/SSL (Certificados auto-assinados para shrt.cc)**
 * Passlib / Python-JOSE (JWT/Hashing)
 * SQLAlchemy 2.0
 * MySQL 8
@@ -60,7 +73,7 @@ cd nginx
 # Torna o script executável
 chmod +x setup_certs.sh
 
-# Executa o script para gerar localhost.key e localhost.crt em nginx/certs
+# Executa o script para gerar shrt.cc.key e shrt.cc.crt em nginx/certs
 ./setup_certs.sh
 
 # Volta para a raiz do projeto
@@ -86,8 +99,13 @@ O Docker realiza:
 
 ## Acesso à Aplicação
 
-* **API:** [http://localhost:8000](http://localhost:8000)
-* **Documentação Swagger:** [http://localhost:8000/docs](http://localhost:8000/docs)
+**Via domínio customizado**
+* **API:** [https://shrt.cc](https://shrt.cc)
+* **Documentação Swagger:** [https://shrt.cc/docs](https://shrt.cc/docs)
+
+**Também disponível via localhost**
+* https://localhost
+* https://localhost/docs
 
 ---
 
@@ -112,7 +130,7 @@ docker-compose up --build
 * Os serviços MySQL e Redis estarão rodando.
 * A API FastAPI estará rodando internamente na porta 8000.
 * O Nginx estará roteando o tráfego.
-* A API e documentação interativa estarão acessíveis via https://localhost/
+* A API e documentação interativa estarão acessíveis via https://shrt.cc
 
 ---
 
