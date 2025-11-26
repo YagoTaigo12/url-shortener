@@ -13,31 +13,26 @@ services:
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
       - db_data:/var/lib/mysql
-    # ports:
-    #   - "3306:3306"
-    healthcheck: # Adiciona Healthcheck ao MySQL
+    healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
       interval: 5s
       timeout: 5s
       retries: 10
-      start_period: 20s # Opcional: tempo para o MySQL inicializar antes de começar a testar
+      start_period: 20s
 
   redis:
-      image: redis:latest # Novo serviço Redis
+      image: redis:latest
       container_name: redis_cache
       restart: always
-      # Não expomos portas para o host, apenas para o backend
-      # ports:
-      #   - "6379:6379"
 
   backend:
     build: ./backend
     container_name: fastapi_backend
     restart: always
     depends_on:
-      db: # Espera o serviço 'db' estar SAUDÁVEL
+      db:
         condition: service_healthy
-      redis: # Adiciona dependência ao Redis
+      redis:
         condition: service_started
     env_file:
       - .env
@@ -45,12 +40,8 @@ services:
       - DATABASE_URL=mysql+pymysql://app_user:app_password@db:3306/url_shortener
     volumes:
       - ./backend:/app
-    # EXPOSE 8000: Permite que outros containers na rede (como o Nginx) acessem a porta 8000
     expose:
-      - "8000" 
-    # ports:
-    #   - "8000:8000"
-    # command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      - "8000"
 
   nginx:
     image: nginx:latest
@@ -59,16 +50,15 @@ services:
     depends_on:
       - backend
     ports:
-      - "80:80"   # HTTP (será redirecionado para HTTPS)
-      - "443:443" # HTTPS
-    # volumes:
-    #   - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - "80:80"
+      - "443:443"
     volumes:
-      # Monta a nova configuração do Nginx com SSL
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      # Monta o diretório de certificados gerados pelo script do host
       - ./nginx/certs:/etc/nginx/certs:ro
+      # Monta o frontend para ser servido pelo Nginx
+      - ./frontend/public:/usr/share/nginx/html:ro
     extra_hosts:
-      - "shrt.cc:10.138.11.229"
+      - "shrt.cc:10.138.11.229" # Ajuste para resolver internamente se necessário
+
 volumes:
   db_data:
