@@ -3,23 +3,24 @@ Ponto de entrada da aplicação FastAPI.
 Inicializa rotas e configurações globais.
 """
 from fastapi import FastAPI
-from app.api import routes_url, routes_auth # Importa o novo router
+from app.api import routes_url, routes_auth
 from app.core.database import Base, engine
-from app.utils.logger import configure_logging # Importa o logger
+from app.utils.logger import configure_logging
 
-# Configura o logger antes de tudo
 configure_logging()
-
-# Cria as tabelas no banco se não existirem (agora inclui a tabela users)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="URL Shortener API")
 
-# Inclui as rotas
-app.include_router(routes_auth.router) # Rotas de Autenticação
-app.include_router(routes_url.router) # Rotas de URLs (agora protegidas)
+# 1. Rotas de Autenticação (Prefixo /api/auth)
+app.include_router(routes_auth.router, prefix="/api")
 
+# 2. Rotas de CRUD de URLs (Prefixo /api/urls)
+app.include_router(routes_url.api_router, prefix="/api/urls")
 
-@app.get("/")
-def root():
-    return {"message": "API do Encurtador de URLs está rodando 🚀"}
+# 3. Rota de Redirecionamento (Raiz /) - Deve ficar por último para não conflitar
+app.include_router(routes_url.redirect_router)
+
+@app.get("/api/health")
+def health_check():
+    return {"status": "ok"}
