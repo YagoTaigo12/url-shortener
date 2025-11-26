@@ -1,18 +1,35 @@
-#  Encurtador de URLs – Sprint 5
+#  Encurtador de URLs – Sprint 6 (Frontend MVP)
 
-Implementação do **Proxy Reverso Nginx e HTTPS/SSL e suporte ao domínio customizado shrt.cc**, garantindo que toda a comunicação com a API e futuros frontends seja criptografada e usando um domínio único para acesso durante o desenvolvimento.
+Implementação da **Interface Visual (Frontend)**, transformando o projeto em uma aplicação Fullstack. Agora, além da API segura, o sistema conta com um Dashboard responsivo para gerenciamento de URLs, login integrado e feedback visual, tudo servido através do Nginx com HTTPS.
 
-A aplicação agora segue os padrões de arquitetura de produção: proxy reverso dedicado, SSL obrigatório, isolamento do backend e uso de certificados auto-assinados criados localmente.
+A arquitetura evoluiu para um modelo robusto onde o **Nginx** atua simultaneamente como:
+
+* **Web Server:** Servindo os arquivos estáticos (HTML, CSS, JS) do frontend.
+* **Reverse Proxy:** Roteando chamadas de API (/api/...) para o backend FastAPI.
+* **SSL Terminator:** Garantindo HTTPS em todas as pontas.
+
 ---
 
-# Novidades da Sprint 5 (Nginx, HTTPS e Domínio shrt.cc)
+## Novidades da Sprint 6 (Frontend & Integração)
 
-* **Camada de Segurança (HTTPS):** Toda a aplicação agora é servida via HTTPS (porta 443), utilizando certificados SSL auto-assinados para o ambiente local.
-* **Proxy Reverso:** O Nginx atua como ponto de entrada único, roteando o tráfego externo para o container FastAPI (backend).
-* **Redirecionamento Automático:** Todo o tráfego HTTP (porta 80) é automaticamente redirecionado para HTTPS (porta 443), forçando o acesso seguro.
-* **Arquitetura de Produção:** O acesso direto ao FastAPI na porta 8000 foi desabilitado externamente, sendo acessível apenas pelo Nginx (melhor prática de segurança e infraestrutura).
-* **Script de Setup de Certificados:** Adição de um script auxiliar (nginx/setup_certs.sh) para simplificar a geração dos certificados SSL auto-assinados necessários para o Nginx
-* **Novo domínio local: shrt.cc:** A aplicação agora suporta o acesso pelo domínio customizado shrt.cc. Este domínio é resolvido internamente pelo Docker através do extra_hosts: 
+- **Frontend Responsivo**  
+  Interface construída com **HTML5**, **Vanilla JS** e **Bootstrap 5**, focada em simplicidade e performance.
+
+- **Dashboard de Gestão**, com funcionalidades visuais para:
+  - Encurtar novas URLs  
+  - Listar histórico recente  
+  - Copiar links curtos (Clipboard API)  
+  - Excluir URLs  
+
+- **Integração Segura (JWT)**  
+  O Frontend gerencia todo o ciclo de vida do **Token JWT**:
+  - Login  
+  - Armazenamento seguro  
+  - Logout automático em caso de expiração  
+
+- **Arquitetura Unificada**
+  - API acessada via prefixo `/api`
+  - Frontend e Backend coexistem no mesmo domínio (`shrt.cc`)
 
 ```yaml
 extra_hosts:
@@ -27,34 +44,32 @@ Esse mapeamento permite:
 
 ## Cronograma do Projeto
 
-**Semana 1:** Setup e configuração inicial do ambiente (estrutura, containers, integração FastAPI + MySQL + Docker Compose).
-**Semana 2:** Implementação do backend base – CRUD de URLs, geração de códigos curtos e redirecionamento.
-**Semana 3:** Implementação completa da autenticação JWT e persistência de usuários no banco de dados. (LDAP adiado para v2.0)
-**Semana 4:** Implementação de cache Redis.
-**Semana 5:** Configuração do Nginx, HTTPS e domínio.
-**Semana 6:** Desenvolvimento do frontend.
-**Semana 7:** Testes, documentação e ajustes finais do MVP.
+**Semana 1:** Setup e configuração inicial (FastAPI + MySQL + Docker)
+**Semana 2:** Backend base (CRUD de URLs e redirecionamento)
+**Semana 3:** Autenticação JWT e Segurança
+**Semana 4:** Cache com Redis
+**Semana 5:** Infraestrutura (Nginx, HTTPS e domínio `shrt.cc`)
+**Semana 6:** Desenvolvimento do Frontend e Integração Fullstac
+**Semana 7:** Testes, documentação final e ajustes de QA
 
 ---
 
 ## Tecnologias Utilizadas
 
-* Python 3.10+
-* FastAPI
-* **Nginx**
-* **HTTPS/SSL (Certificados auto-assinados para shrt.cc)**
-* Passlib / Python-JOSE (JWT/Hashing)
-* SQLAlchemy 2.0
-* MySQL 8
-* Redis (Cache)
-* Alembic (migrações)
-* Docker + Docker Compose
-* Uvicorn (ASGI)
-* Healthcheck de serviço (aguarda MySQL antes de iniciar a API)
+### Frontend
+- HTML5 / CSS3
+- JavaScript (ES6+)
+- Bootstrap 5
+
+### Backend & Infra
+- Python 3.10+ / FastAPI
+- Nginx (Reverse Proxy + Web Server)
+- HTTPS / SSL (certificados autoassinados)
+- MySQL 8
+- Redis
+- Docker e Docker Compose
 
 ---
-
-## Setup do Projeto
 
 ### Clonar o repositório
 
@@ -79,7 +94,7 @@ chmod +x setup_certs.sh
 # Volta para a raiz do projeto
 cd ..
 
-**Importante:** Após gerar os certificados, você deve instalar o arquivo nginx/certs/localhost.crt no seu sistema operacional como uma Autoridade de Certificação Raiz Confiável para evitar avisos de segurança no navegador durante o desenvolvimento.
+**Importante:** Após gerar os certificados, você deve instalar o arquivo nginx/certs/shrt.cc.crt no seu sistema operacional como uma Autoridade de Certificação Raiz Confiável para evitar avisos de segurança no navegador durante o desenvolvimento.
 
 ###  Subir o ambiente com Docker Compose
 
@@ -126,6 +141,7 @@ Após rodar:
 
 ```bash
 docker-compose up --build
+
 ```
 * Os serviços MySQL e Redis estarão rodando.
 * A API FastAPI estará rodando internamente na porta 8000.
@@ -134,6 +150,8 @@ docker-compose up --build
 
 ---
 
-## Próximas Etapas (Sprint 6)
+## Próximas Etapas (Sprint 7)
 
-* Desenvolvimento do frontend – construção de uma interface simples em HTML e Bootstrap integrada à API para encurtamento e gerenciamento de URLs.
+* Testes de integração ponta a ponta
+* Refinamento da documentação técnica
+* Empacotamento final do MVP para distribuição
