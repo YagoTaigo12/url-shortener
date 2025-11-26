@@ -44,3 +44,4 @@ nginx/certs-old/
 # Scripts gerados (Instaladores)
 /project_installer*.sh
 /generate*.sh
+/install*.sh
