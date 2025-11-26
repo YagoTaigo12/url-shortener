@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Encurtador de URL</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="assets/Logo.png" type="image/x-icon" />
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <img src="assets/Logo.png" alt="Logo" class="login-logo" onerror="this.style.display='none'">
+            <h4 class="mb-4 text-primary fw-bold">Acesso ao Sistema</h4>
+            <p class="text-muted mb-4">Informe suas credenciais para acessar</p>
+            
+            <form id="loginForm">
+                <div class="mb-3 text-start">
+                    <label class="form-label">Usuário *</label>
+                    <input type="text" class="form-control" id="username" required>
+                </div>
+                <div class="mb-3 text-start">
+                    <label class="form-label">Senha *</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary-custom">Entrar</button>
+                </div>
+            </form>
+            
+            <div id="errorAlert" class="alert alert-danger mt-3 d-none" role="alert"></div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        Auth.checkAuthAndRedirect();
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const errorDiv = document.getElementById('errorAlert');
+            
+            btn.disabled = true;
+            btn.textContent = 'Entrando...';
+            errorDiv.classList.add('d-none');
+
+            try {
+                await Auth.login(
+                    document.getElementById('username').value,
+                    document.getElementById('password').value
+                );
+                window.location.href = '/';
+            } catch (err) {
+                errorDiv.textContent = 'Usuário ou senha incorretos.';
+                errorDiv.classList.remove('d-none');
+                btn.disabled = false;
+                btn.textContent = 'Entrar';
+            }
+        });
+    </script>
+</body>
+</html>

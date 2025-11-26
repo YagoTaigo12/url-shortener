@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Encurtador</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="assets/Logo.png" type="image/x-icon" />
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="bi bi-link-45deg"></i> Encurtador
+            </a>
+            <div class="d-flex align-items-center">
+                <span class="text-white me-3" id="userDisplay">Usuário</span>
+                <img src="assets/user.jpg" alt="User" class="user-avatar me-3" onerror="this.src='https://via.placeholder.com/40'">
+                <button onclick="Auth.logout()" class="btn btn-outline-light btn-sm">Sair</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container">
+            
+            <!-- Encurtar URL Card -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="bi bi-plus-circle"></i> Nova URL Curta</h5>
+                    <form id="shortenForm" class="row g-3">
+                        <div class="col-md-10">
+                            <input type="url" class="form-control" id="originalUrl" placeholder="Cole sua URL longa aqui (ex: https://google.com)" required>
+                        </div>
+                        <div class="col-md-2 d-grid">
+                            <button type="submit" class="btn btn-primary-custom">Encurtar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Lista de URLs -->
+            <h5 class="text-secondary mb-3">Suas URLs Recentes</h5>
+            <div id="urlsList">
+                <!-- Itens serão injetados aqui via JS -->
+                <div class="text-center py-4 text-muted">Carregando...</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toast para notificações -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">Sistema</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        // 1. Verifica Auth
+        Auth.checkAuthAndRedirect();
+        document.getElementById('userDisplay').innerText = localStorage.getItem('username') || 'Usuário';
+
+        // 2. Funções de UI
+        const showToast = (msg) => {
+            const toastEl = document.getElementById('liveToast');
+            document.getElementById('toastMessage').innerText = msg;
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        };
+
+        const copyToClipboard = (text) => {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Link copiado para a área de transferência!');
+            });
+        };
+
+        const renderUrls = (urls) => {
+            const list = document.getElementById('urlsList');
+            list.innerHTML = '';
+            
+            if (urls.length === 0) {
+                list.innerHTML = '<div class="text-center text-muted py-4">Nenhuma URL criada ainda.</div>';
+                return;
+            }
+
+            urls.forEach(url => {
+                const fullShortUrl = `${window.location.origin}/${url.short_code}`;
+                const html = `
+                    <div class="url-list-item">
+                        <div class="text-truncate me-3" style="max-width: 60%;">
+                            <div class="short-link mb-1">${fullShortUrl}</div>
+                            <div class="text-muted small text-truncate">${url.original_url}</div>
+                        </div>
+                        <div>
+                            <button onclick="copyToClipboard('${fullShortUrl}')" class="btn btn-light btn-sm me-1" title="Copiar">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                            <button onclick="handleDelete('${url.short_code}')" class="btn btn-outline-danger btn-sm" title="Deletar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                list.insertAdjacentHTML('beforeend', html);
+            });
+        };
+
+        // 3. Carregar Dados
+        const loadData = async () => {
+            try {
+                const urls = await API.listUrls();
+                renderUrls(urls);
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
+        // 4. Event Listeners
+        document.getElementById('shortenForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('originalUrl');
+            const btn = e.target.querySelector('button');
+            
+            btn.disabled = true;
+            btn.textContent = '...';
+
+            try {
+                await API.shortenUrl(input.value);
+                input.value = '';
+                showToast('URL encurtada com sucesso!');
+                await loadData();
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Encurtar';
+            }
+        });
+
+        window.handleDelete = async (code) => {
+            if(!confirm('Tem certeza que deseja deletar?')) return;
+            try {
+                await API.deleteUrl(code);
+                showToast('URL deletada.');
+                await loadData();
+            } catch (err) {
+                alert('Erro ao deletar.');
+            }
+        };
+
+        // Init
+        loadData();
+    </script>
+</body>
+</html>
