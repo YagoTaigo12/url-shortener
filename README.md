@@ -1,8 +1,8 @@
-#  Encurtador de URLs – Sprint 6 (Frontend MVP)
+# Encurtador de URLs – Sprint 6 (Frontend MVP & Isolamento de Dados)
 
-Implementação da **Interface Visual (Frontend)**, transformando o projeto em uma aplicação Fullstack. Agora, além da API segura, o sistema conta com um Dashboard responsivo para gerenciamento de URLs, login integrado e feedback visual, tudo servido através do Nginx com HTTPS.
+Implementação da **Interface Visual (Frontend)** e do **Isolamento Lógico de Usuários (Multi-tenancy)**.
 
-A arquitetura evoluiu para um modelo robusto onde o **Nginx** atua simultaneamente como:
+Agora, o projeto é uma aplicação Fullstack completa onde cada usuário tem um ambiente privado. O sistema garante que as URLs criadas por um usuário sejam visíveis e gerenciáveis apenas por ele, mantendo a privacidade dos dados, tudo servido através do Nginx com HTTPS.
 
 * **Web Server:** Servindo os arquivos estáticos (HTML, CSS, JS) do frontend.
 * **Reverse Proxy:** Roteando chamadas de API (/api/...) para o backend FastAPI.
@@ -26,6 +26,12 @@ A arquitetura evoluiu para um modelo robusto onde o **Nginx** atua simultaneamen
   - Login  
   - Armazenamento seguro  
   - Logout automático em caso de expiração  
+
+  - **Isolamento de Dados (Privacidade)** [NOVO]
+  Implementação de regras de negócio no Backend garantindo que:
+  - Usuários visualizem apenas o histórico das **próprias** URLs.
+  - Exclusão e edição sejam permitidas apenas ao **dono** do registro.
+  - Alteração no Schema do Banco de Dados para vincular URLs a Usuários (`owner_id`).
 
 - **Arquitetura Unificada**
   - API acessada via prefixo `/api`
@@ -133,6 +139,14 @@ O Docker realiza:
 | `DELETE /urls/{short_code}` | Remove uma URL pelo código curto |           |
 | `GET /{short_code}`         | Redireciona para a URL original  |           |
 
+
+| Método | Rota                 | Descrição                                            | Escopo  |
+|--------|----------------------|------------------------------------------------------|---------|
+| POST   | `/urls/`             | Cria uma URL curta e vincula ao ID do usuário logado | Privado |
+| GET    | `/urls/`             | Lista URLs pertencentes ao usuário autenticado       | Privado |
+| DELETE | `/urls/{short_code}` | Remove uma URL, permitindo exclusão apenas pelo dono | Privado |
+| GET    | `/{short_code}`      | Redireciona para a URL original (Cache + Banco)      | Público |
+
 ---
 
 ##  Resultado Esperado
@@ -149,6 +163,11 @@ docker-compose up --build
 * A API e documentação interativa estarão acessíveis via https://shrt.cc
 
 ---
+
+### Nota sobre Performance e Cache
+O sistema utiliza uma estratégia de **Read-Through Cache** com Redis:
+1. **Redirecionamento:** O acesso público (`shrt.cc/xyz`) é extremamente rápido pois prioriza a leitura da memória (Redis).
+2. **Persistência:** O Dashboard lê diretamente do MySQL, garantindo que o usuário veja seus dados sempre consistentes, mesmo que o cache seja limpo.
 
 ## Próximas Etapas (Sprint 7)
 
