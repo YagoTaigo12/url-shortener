@@ -132,14 +132,6 @@ O Docker realiza:
 
 ## Endpoints Principais
 
-| Método                      | Rota                             | Descrição |
-| :-------------------------- | :------------------------------- | :-------- |
-| `POST /urls/`               | Cria uma URL curta               |           |
-| `GET /urls/`                | Lista as URLs cadastradas        |           |
-| `DELETE /urls/{short_code}` | Remove uma URL pelo código curto |           |
-| `GET /{short_code}`         | Redireciona para a URL original  |           |
-
-
 | Método | Rota                 | Descrição                                            | Escopo  |
 |--------|----------------------|------------------------------------------------------|---------|
 | POST   | `/urls/`             | Cria uma URL curta e vincula ao ID do usuário logado | Privado |
