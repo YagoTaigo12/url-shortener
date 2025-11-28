@@ -15,21 +15,26 @@ def generate_short_code(length: int = 6) -> str:
     """Gera um código aleatório."""
     return ''.join(random.choices(ALPHABET, k=length))
 
-def create_short_url(db: Session, url_data: URLCreate, max_attempts: int = 5):
+def create_short_url(db: Session, url_data: URLCreate, user_id: int, max_attempts: int = 5):
     """
-    Cria uma URL curta no DB e armazena no cache.
+    Cria uma URL curta no DB vinculada a um usuário e armazena no cache.
     """
     new_url = None
     for attempt in range(max_attempts):
         code = generate_short_code()
-        new_url = URL(original_url=url_data.original_url, short_code=code)
+        # Aqui inserimos o owner_id
+        new_url = URL(
+            original_url=url_data.original_url, 
+            short_code=code,
+            owner_id=user_id 
+        )
         try:
             db.add(new_url)
             db.commit()
             db.refresh(new_url)
-            logger.info(f"URL curta criada no DB: {code}")
+            logger.info(f"URL curta criada no DB: {code} para User ID: {user_id}")
             
-            # ATUALIZAÇÃO DO CACHE: Armazena a nova URL no Redis (assíncrono/em background se chamado pela rota)
+            # Cache (Read-Through)
             cache_url(new_url.short_code, new_url.original_url)
             
             return new_url
@@ -41,42 +46,46 @@ def create_short_url(db: Session, url_data: URLCreate, max_attempts: int = 5):
 
 def get_original_url(db: Session, short_code: str) -> Optional[URL]:
     """
-    Retorna a URL original, priorizando o cache (Read-Through Cache).
+    Retorna a URL original. 
+    NOTA: O redirecionamento continua PÚBLICO (não filtra por usuário),
+    pois qualquer pessoa com o link deve conseguir acessar.
     """
     # 1. Tenta buscar no cache
     cached_url = get_cached_url(short_code)
     if cached_url:
-        logger.info(f"Cache HIT para short_code: {short_code}")
-        # Retorna um objeto URL fake com apenas o campo original_url preenchido
+        logger.debug(f"Cache HIT para short_code: {short_code}")
+        # Retorna objeto fake apenas para redirecionamento
         return URL(original_url=cached_url, short_code=short_code, id=0) 
 
-    logger.info(f"Cache MISS para short_code: {short_code}. Buscando no DB.")
+    logger.debug(f"Cache MISS para short_code: {short_code}. Buscando no DB.")
     
     # 2. Se falhar, busca no banco de dados
     url_db = db.query(URL).filter(URL.short_code == short_code).first()
     
-    # 3. Se encontrado no DB, armazena no cache para futuras requisições
+    # 3. Se encontrado, atualiza cache
     if url_db:
         cache_url(url_db.short_code, url_db.original_url)
     
     return url_db
 
-def list_urls(db: Session, limit: int = 100):
-    """Lista URLs mais recentes (sem cache para simplificar)."""
-    return db.query(URL).order_by(URL.created_at.desc()).limit(limit).all()
+def list_urls(db: Session, user_id: int, limit: int = 100):
+    """Lista apenas as URLs pertencentes ao usuário logado."""
+    return db.query(URL).filter(URL.owner_id == user_id).order_by(URL.created_at.desc()).limit(limit).all()
 
-def delete_url(db: Session, short_code: str) -> bool:
+def delete_url(db: Session, short_code: str, user_id: int) -> bool:
     """
-    Deleta uma URL pelo código curto e invalida o cache.
+    Deleta uma URL apenas se ela pertencer ao usuário logado.
     """
-    url = db.query(URL).filter(URL.short_code == short_code).first()
+    # Filtra pelo código E pelo dono
+    url = db.query(URL).filter(URL.short_code == short_code, URL.owner_id == user_id).first()
+    
     if not url:
         return False
         
     db.delete(url)
     db.commit()
     
-    # INVALidação DO CACHE: Deleta a chave do Redis (assíncrono/em background se chamado pela rota)
+    # Invalida cache
     invalidate_url_cache(short_code)
     
     return True
