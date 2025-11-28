@@ -16,4 +16,4 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relação opcional: Se quiser ligar URLs a um usuário (Futuro)
-    # urls = relationship("URL", back_populates="owner")
+    urls = relationship("URL", back_populates="owner")
